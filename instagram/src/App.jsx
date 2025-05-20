@@ -1,9 +1,7 @@
-// pages/App.jsx
-import { useState, useEffect } from "react";
-import supabase from "../lib/supabase-client";
-import Photos from "./Photos";
+/*import { useState, useEffect } from "react";
+import supabase from "./lib/supabase-client";
 
-export default function App() {
+function App() {
   const [session, setSession] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -75,7 +73,6 @@ export default function App() {
     }
 
     alert("Zdjęcie przesłane i zapisane!");
-    window.location.reload(); // optionally improve later
   };
 
   if (!session) {
@@ -115,12 +112,13 @@ export default function App() {
       <button onClick={handleSignOut} style={{ marginBottom: "20px" }}>
         Wyloguj
       </button>
-      <div style={{ marginBottom: "20px" }}>
+      <div>
         <input type="file" onChange={(e) => setFile(e.target.files[0])} />
         <button onClick={handleUpload}>Wyślij zdjęcie</button>
       </div>
-
-      <Photos user={session.user} />
     </div>
   );
 }
+
+export default App;
+*/

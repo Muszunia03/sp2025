@@ -1,5 +1,6 @@
 import { useState } from "react";
 import supabase from "../lib/supabase-client";
+import styles from "../styles/upload.module.css";
 
 export default function Upload() {
   const [file, setFile] = useState(null);
@@ -10,33 +11,46 @@ export default function Upload() {
     if (!file) return setStatus({ type: "error", message: "Wybierz plik!" });
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-
     if (userError || !user) {
       console.error("Brak użytkownika:", userError);
       return setStatus({ type: "error", message: "Musisz być zalogowany." });
     }
 
     const filePath = `${user.id}/${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from("photos").upload(filePath, file);
 
-    if (error) {
-      console.error("Upload error:", error);
-      return setStatus({ type: "error", message: "Błąd: " + error.message });
+    const { error: uploadError } = await supabase.storage
+      .from("photos")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      return setStatus({ type: "error", message: "Błąd: " + uploadError.message });
     }
 
-    const { data: { publicUrl } } = supabase.storage.from("photos").getPublicUrl(filePath);
+    const { error: insertError } = await supabase.from("photos").insert([
+      {
+        user_id: user.id,
+        file_path: filePath,
+        title: file.name,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
+    if (insertError) {
+      console.error("Błąd zapisu do bazy:", insertError);
+      return setStatus({ type: "error", message: "Nie udało się zapisać danych do bazy." });
+    }
 
     setStatus({ type: "success", message: `Sukces! Plik przesłany.` });
-    console.log("Publiczny URL:", publicUrl);
+    setFile(null);
   };
 
-return (
-  <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black text-white flex items-start justify-center px-4 pt-32 font-sans">
-    <div className="bg-zinc-800 p-8 rounded-3xl shadow-2xl border border-zinc-700 w-full max-w-md transition-all duration-300">
-      <h2 className="text-3xl font-extrabold text-center mb-6 tracking-tight text-white">
-        Dodaj Plik
-      </h2>
+  return (
+    <div className={styles.container}>
+      <h1 className={styles.title}>Dodaj plik</h1>
+
       <div
+        className={styles.dropzone}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
@@ -44,41 +58,31 @@ return (
             setFile(e.dataTransfer.files[0]);
           }
         }}
-        className="border-2 border-dashed border-zinc-500 rounded-xl p-6 mb-4 text-center cursor-pointer hover:border-purple-400 transition"
       >
         {file ? (
-          <p className="text-green-400 font-medium">{file.name}</p>
+          <p className={styles.fileName}>{file.name}</p>
         ) : (
-          <p className="text-zinc-300">Przeciągnij Plik</p>
+          <p className={styles.filePlaceholder}>Przeciągnij plik tutaj</p>
         )}
       </div>
-      <label className="block mb-4">
+
+      <label className={styles.inputLabel}>
         <input
           type="file"
           onChange={(e) => setFile(e.target.files[0])}
-          className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer transition"
+          className={styles.fileInput}
         />
       </label>
-      <button
-        onClick={handleUpload}
-        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200"
-      >
+
+      <button onClick={handleUpload} className={styles.button}>
         Wyślij
       </button>
+
       {status && (
-        <div
-          className={`mt-4 text-sm rounded-lg p-3 text-center ${
-            status.type === "success"
-              ? "bg-green-600 text-white"
-              : "bg-red-600 text-white"
-          }`}
-        >
+        <div className={`${styles.status} ${styles[status.type]}`}>
           {status.message}
         </div>
       )}
     </div>
-  </div>
-);
-
-
+  );
 }
