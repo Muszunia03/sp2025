@@ -79,40 +79,91 @@ export default function MapWithMetadata() {
     fetchPhotosWithMetadata();
   }, []);
 
+  const photosWithLocation = photos.filter(
+    (p) => p.metadata?.lat && p.metadata?.lng
+  );
+
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Mapa Zdjęć z Metadanymi</h1>
+      <h1 style={{ fontSize: "24px", marginBottom: "16px" }}>
+        Mapa zdjęć z lokalizacją GPS
+      </h1>
 
-      <MapContainer
-        center={[52.22977, 21.01178]}
-        zoom={6}
-        scrollWheelZoom={true}
-        style={{ height: "600px", width: "100%" }} 
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {photos
-          .filter((p) => p.metadata?.lat && p.metadata?.lng)
-          .map((photo) => {
-            const icon = new L.Icon({
-              iconUrl: photo.url,
-              iconSize: [40, 40], 
-              iconAnchor: [20, 40], 
-            });
+      {loading ? (
+        <p>Ładowanie zdjęć...</p>
+      ) : (
+        <>
+          <MapContainer
+            center={[52.22977, 21.01178]}
+            zoom={6}
+            scrollWheelZoom={true}
+            style={{ height: "600px", width: "100%", marginBottom: "30px" }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
 
-            return (
-              <Marker
-                key={photo.id}
-                position={[photo.metadata.lat, photo.metadata.lng]}
-                icon={icon}
-              >
-                <Popup>{photo.title}</Popup>
-              </Marker>
-            );
-          })}
-      </MapContainer>
+            {photosWithLocation.map((photo) => {
+              const icon = new L.Icon({
+                iconUrl: photo.url,
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+              });
+
+              return (
+                <Marker
+                  key={photo.id}
+                  position={[photo.metadata.lat, photo.metadata.lng]}
+                  icon={icon}
+                >
+                  <Popup>
+                    <strong>{photo.title}</strong>
+                    <br />
+                    {photo.metadata.date
+                      ? new Date(photo.metadata.date).toLocaleString()
+                      : "Brak daty"}
+                  </Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
+
+          <h2 style={{ fontSize: "18px", marginBottom: "12px" }}>
+            Zdjęcia z danymi lokalizacji:
+          </h2>
+          {photosWithLocation.length === 0 ? (
+            <p>Brak zdjęć z informacją o lokalizacji GPS.</p>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                gap: "16px",
+              }}
+            >
+              {photosWithLocation.map((photo) => (
+                <div key={photo.id} style={{ textAlign: "center" }}>
+                  <img
+                    src={photo.url}
+                    alt={photo.title}
+                    style={{
+                      width: "100%",
+                      borderRadius: "8px",
+                      pointerEvents: "none",
+                    }}
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                  <p style={{ fontSize: "12px", color: "#888", marginTop: "4px" }}>
+                    {photo.title}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

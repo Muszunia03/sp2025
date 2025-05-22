@@ -5,7 +5,7 @@ export default function Photos() {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const [selectedImage, setSelectedImage] = useState(null); // <-- dodane
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -124,33 +124,115 @@ export default function Photos() {
             return (
               <div key={photo.id} style={{ textAlign: "center" }}>
                 {type === "image" && (
-                  <img
-                    src={url}
-                    alt={photo.title}
-                    style={{ width: "100%", borderRadius: "8px", cursor: "pointer" }}
-                    onClick={() => setSelectedImage(url)}
-                  />
-                )}
-                {type === "video" && (
-                  <video controls style={{ width: "100%", borderRadius: "8px" }}>
-                    <source src={url} type="video/mp4" />
-                  </video>
-                )}
-                {type === "audio" && (
-                  <audio controls style={{ width: "100%" }}>
-                    <source src={url} type="audio/mpeg" />
-                  </audio>
-                )}
-                {type === "file" && (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: "block", color: "#4f46e5", marginBottom: "8px" }}
+                    <div
+                      onClick={() => setSelectedImage(url)}
+                      onContextMenu={(e) => e.preventDefault()}
+                      style={{
+                        position: "relative",
+                        width: "100%",
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      <img
+                        src={url}
+                        alt={photo.title}
+                        draggable={false}
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          display: "block",
+                          pointerEvents: "none",
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "6px",
+                          right: "6px",
+                          backgroundColor: "rgba(0,0,0,0.6)",
+                          color: "white",
+                          fontSize: "12px",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        © AHAOKOK
+                      </div>
+                    </div>
+                  )}
+                    {type === "video" && (
+                  <div
+                    onContextMenu={(e) => e.preventDefault()}
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                      userSelect: "none",
+                    }}
                   >
-                    {photo.title}
-                  </a>
+                    <video
+                      controls
+                      style={{ width: "100%", display: "block" }}
+                      onContextMenu={(e) => e.preventDefault()}
+                      draggable={false}
+                    >
+                      <source src={url} type="video/mp4" />
+                    </video>
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "6px",
+                        right: "6px",
+                        backgroundColor: "rgba(0,0,0,0.6)",
+                        color: "white",
+                        fontSize: "12px",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      © AHAOKOK
+                    </div>
+                  </div>
                 )}
+
+                {type === "audio" && (
+                  <div onContextMenu={(e) => e.preventDefault()} style={{ userSelect: "none" }}>
+                    <audio
+                      controls
+                      style={{ width: "100%" }}
+                      onContextMenu={(e) => e.preventDefault()}
+                      draggable={false}
+                    >
+                      <source src={url} type="audio/mpeg" />
+                    </audio>
+                  </div>
+                )}
+
+                {type === "file" && (
+                  <div onContextMenu={(e) => e.preventDefault()} style={{ userSelect: "none" }}>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "block",
+                        color: "#4f46e5",
+                        marginBottom: "8px",
+                        pointerEvents: "none",
+                      }}
+                      draggable={false}
+                    >
+                      {photo.title}
+                    </a>
+                  </div>
+                )}
+
                 <p style={{ fontSize: "14px", marginTop: "4px", color: "#aaa" }}>
                   {photo.title}
                 </p>
@@ -177,6 +259,7 @@ export default function Photos() {
       {selectedImage && (
         <div
           onClick={() => setSelectedImage(null)}
+          onContextMenu={(e) => e.preventDefault()}
           style={{
             position: "fixed",
             top: 0,
@@ -188,19 +271,40 @@ export default function Photos() {
             justifyContent: "center",
             alignItems: "center",
             zIndex: 1000,
+            userSelect: "none",
           }}
         >
-          <img
-            src={selectedImage}
-            alt="Powiększone zdjęcie"
-            style={{
-              maxWidth: "90%",
-              maxHeight: "90%",
-              borderRadius: "10px",
-              boxShadow: "0 0 20px black",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+            <img
+              src={selectedImage}
+              alt="Powiększone zdjęcie"
+              draggable={false}
+              style={{
+                maxWidth: "90vw",
+                maxHeight: "90vh",
+                borderRadius: "10px",
+                boxShadow: "0 0 20px black",
+              }}
+            />
+            {/* Watermark */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "10px",
+                right: "10px",
+                padding: "4px 10px",
+                backgroundColor: "rgba(0,0,0,0.6)",
+                color: "white",
+                fontSize: "14px",
+                borderRadius: "5px",
+                pointerEvents: "none",
+                userSelect: "none",
+              }}
+            >
+              © AHAOKOK
+            </div>
+          </div>
+
           <button
             onClick={() => setSelectedImage(null)}
             style={{

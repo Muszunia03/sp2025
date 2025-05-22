@@ -5,8 +5,8 @@ import exifr from "exifr";
 export default function Albums() {
   const [albums, setAlbums] = useState({});
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null); // <-- dodane
 
-  // Dozwolone rozszerzenia plików zdjęć
   const imageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
 
   const isImageFile = (filename) => {
@@ -36,13 +36,12 @@ export default function Albums() {
 
       const enrichedPhotos = await Promise.all(
         photoList
-          .filter(photo => isImageFile(photo.file_path)) // 🔒 tylko zdjęcia
+          .filter(photo => isImageFile(photo.file_path))
           .map(async (photo) => {
             const { data } = supabase.storage.from("photos").getPublicUrl(photo.file_path);
             const url = data?.publicUrl;
 
             let date;
-
             try {
               const exif = await exifr.parse(url);
               date = exif?.DateTimeOriginal || null;
@@ -50,15 +49,13 @@ export default function Albums() {
               console.warn("Nie udało się pobrać EXIF dla", photo.title, err);
             }
 
-            // Jeśli brak EXIF daty, użyj daty z bazy
             const finalDate = date ? new Date(date) : new Date(photo.created_at);
-            const albumKey = finalDate.toISOString().split("T")[0]; // YYYY-MM-DD
+            const albumKey = finalDate.toISOString().split("T")[0];
 
             return { ...photo, url, albumKey };
           })
       );
 
-      // Grupowanie po dacie
       const grouped = {};
       enrichedPhotos.forEach((photo) => {
         if (!grouped[photo.albumKey]) {
@@ -89,10 +86,12 @@ export default function Albums() {
                   <img
                     src={photo.url}
                     alt={photo.title}
+                    onClick={() => setSelectedImage(photo.url)}
                     style={{
                       maxWidth: "150px",
                       borderRadius: "8px",
-                      objectFit: "cover"
+                      objectFit: "cover",
+                      cursor: "pointer"
                     }}
                   />
                   <p style={{ fontSize: "14px" }}>{photo.title}</p>
@@ -101,6 +100,52 @@ export default function Albums() {
             </div>
           </div>
         ))
+      )}
+
+      {/* MODAL */}
+      {selectedImage && (
+        <div
+          onClick={() => setSelectedImage(null)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <img
+            src={selectedImage}
+            alt="Powiększone zdjęcie"
+            style={{
+              maxWidth: "90%",
+              maxHeight: "90%",
+              borderRadius: "10px",
+              boxShadow: "0 0 20px black",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setSelectedImage(null)}
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "30px",
+              fontSize: "32px",
+              color: "white",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            &times;
+          </button>
+        </div>
       )}
     </div>
   );
